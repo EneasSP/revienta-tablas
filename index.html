@@ -1,0 +1,657 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Revienta Tablas</title>
+<meta name="description" content="Juego para aprender las tablas de multiplicar reventando pompas de jabón.">
+<meta name="theme-color" content="#3a2f6b">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --tinta: #3b2f4a;
+    --blanco: #ffffff;
+    --verde: #4dbb7c;
+    --verde-osc: #2f8f5a;
+    --rojo: #e8706a;
+    --amarillo: #ffc93c;
+    --radio: 26px;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  [hidden] { display: none !important; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    color: var(--blanco);
+    font-family: 'Lexend', 'Trebuchet MS', system-ui, sans-serif;
+    letter-spacing: .02em;
+    overflow: hidden;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
+    background: #3a2f6b;
+  }
+  button { font: inherit; color: inherit; cursor: pointer; border: 0; background: none; }
+
+  /* ---------- Fondos ---------- */
+  .fondo { position: fixed; inset: 0; z-index: 0; transition: opacity .6s; }
+  body[data-fondo="atardecer"] .fondo {
+    background:
+      radial-gradient(120% 60% at 50% 105%, rgba(255, 196, 140, .9), transparent 60%),
+      linear-gradient(180deg, #2e2763 0%, #5d4593 38%, #b8628f 72%, #f39a7c 100%);
+  }
+  body[data-fondo="cielo"] .fondo {
+    background:
+      radial-gradient(90% 50% at 80% 0%, rgba(255, 255, 255, .45), transparent 60%),
+      linear-gradient(180deg, #2f7fc4 0%, #4fa6e0 45%, #8fd0f5 80%, #c9ecff 100%);
+  }
+  body[data-fondo="noche"] .fondo {
+    background:
+      radial-gradient(1.5px 1.5px at 12% 18%, #fff, transparent),
+      radial-gradient(1.5px 1.5px at 28% 8%, #fff, transparent),
+      radial-gradient(2px 2px at 44% 26%, #fff, transparent),
+      radial-gradient(1.5px 1.5px at 63% 12%, #fff, transparent),
+      radial-gradient(2px 2px at 81% 22%, #fff, transparent),
+      radial-gradient(1.5px 1.5px at 92% 6%, #fff, transparent),
+      radial-gradient(1.5px 1.5px at 7% 42%, #fff, transparent),
+      radial-gradient(1.5px 1.5px at 55% 40%, #fff, transparent),
+      radial-gradient(1.5px 1.5px at 74% 48%, #fff, transparent),
+      radial-gradient(1.5px 1.5px at 35% 55%, #fff, transparent),
+      radial-gradient(60% 40% at 50% 110%, rgba(110, 90, 200, .7), transparent 70%),
+      linear-gradient(180deg, #0c1230 0%, #1b2453 55%, #33377a 100%);
+  }
+  /* Nubes suaves que pasan despacio */
+  .nube {
+    position: absolute; width: 260px; height: 80px; border-radius: 50%;
+    background: radial-gradient(closest-side, rgba(255, 255, 255, .28), rgba(255, 255, 255, 0));
+    animation: nube linear infinite;
+  }
+  body[data-fondo="noche"] .nube { opacity: .35; }
+  @keyframes nube { from { transform: translateX(-320px); } to { transform: translateX(calc(100vw + 60px)); } }
+
+  /* Capa de pompas decorativas */
+  .decor { position: fixed; inset: 0; z-index: 1; overflow: hidden; pointer-events: none; }
+  .decor .pompa { pointer-events: none; }
+  body.en-menu .decor .pompa { pointer-events: auto; cursor: pointer; }
+
+  .efectos { position: fixed; inset: 0; z-index: 5; pointer-events: none; overflow: hidden; }
+
+  /* ---------- Pompa de jabón ---------- */
+  .pompa {
+    position: absolute; left: 0; top: 0;
+    width: var(--t); height: var(--t);
+    will-change: transform;
+  }
+  .pompa .forma {
+    position: absolute; inset: 0; border-radius: 50%;
+    animation: tiembla 3.2s ease-in-out infinite;
+    animation-delay: var(--retraso, 0s);
+  }
+  .pompa .film, .pompa .iris, .pompa .brillo { position: absolute; inset: 0; border-radius: 50%; }
+  /* Tinte de película de jabón, muy sutil en el centro */
+  .pompa .film {
+    background: conic-gradient(from 40deg,
+      rgba(255, 122, 217, .22), rgba(111, 211, 255, .2), rgba(141, 255, 176, .18),
+      rgba(255, 211, 110, .2), rgba(169, 139, 255, .22), rgba(255, 122, 217, .22));
+    -webkit-mask: radial-gradient(circle closest-side, rgba(0,0,0,.15) 30%, rgba(0,0,0,.6) 80%, #000 100%);
+            mask: radial-gradient(circle closest-side, rgba(0,0,0,.15) 30%, rgba(0,0,0,.6) 80%, #000 100%);
+    animation: gira 11s linear infinite reverse;
+  }
+  /* Borde tornasolado */
+  .pompa .iris {
+    background: conic-gradient(from 0deg, #ff7ad9, #ffd36e, #8dffb0, #6fd3ff, #a98bff, #ff7ad9);
+    -webkit-mask: radial-gradient(circle closest-side, transparent 66%, rgba(0,0,0,.35) 84%, #000 96%, transparent 100%);
+            mask: radial-gradient(circle closest-side, transparent 66%, rgba(0,0,0,.35) 84%, #000 96%, transparent 100%);
+    opacity: .8;
+    mix-blend-mode: screen;
+    animation: gira 6s linear infinite;
+  }
+  /* Reflejos de luz */
+  .pompa .brillo {
+    background:
+      radial-gradient(ellipse 16% 11% at 31% 24%, rgba(255,255,255,.95), rgba(255,255,255,0) 100%),
+      radial-gradient(ellipse 30% 22% at 34% 28%, rgba(255,255,255,.35), rgba(255,255,255,0) 100%),
+      radial-gradient(ellipse 12% 6% at 70% 82%, rgba(255,255,255,.55), rgba(255,255,255,0) 100%),
+      radial-gradient(circle closest-side, rgba(255,255,255,0) 82%, rgba(255,255,255,.35) 97%, rgba(255,255,255,0) 100%);
+    box-shadow: 0 0 calc(var(--t) * .12) rgba(255, 255, 255, .12);
+  }
+  .pompa .cuenta {
+    position: absolute; inset: 0; display: grid; place-items: center;
+    font-weight: 800; font-size: calc(var(--t) * .25); line-height: 1;
+    color: #fff; white-space: nowrap;
+    text-shadow: 0 2px 0 rgba(40, 25, 80, .35), 0 0 calc(var(--t) * .08) rgba(40, 25, 80, .55);
+  }
+  .pompa.no { animation: no .45s ease-in-out; }
+  @keyframes gira { to { transform: rotate(360deg); } }
+  @keyframes tiembla {
+    0%, 100% { transform: scale(1, 1); }
+    25% { transform: scale(1.025, .975); }
+    50% { transform: scale(.985, 1.015); }
+    75% { transform: scale(1.012, .988); }
+  }
+  @keyframes no {
+    0%, 100% { translate: 0 0; }
+    20% { translate: -10px 0; } 40% { translate: 10px 0; }
+    60% { translate: -6px 0; } 80% { translate: 6px 0; }
+  }
+
+  /* ---------- Pantallas ---------- */
+  .pantalla {
+    position: fixed; inset: 0; z-index: 2;
+    display: flex; flex-direction: column; align-items: center;
+    padding: max(12px, env(safe-area-inset-top)) 16px max(14px, env(safe-area-inset-bottom));
+    pointer-events: none;
+  }
+  .pantalla button, .pantalla .tocable { pointer-events: auto; }
+
+  /* Menú */
+  .menu { justify-content: center; gap: 26px; text-align: center; }
+  .titulo { margin: 0; font-weight: 800; line-height: .95; font-size: min(17vw, 96px); }
+  .titulo span { display: block; }
+  .titulo .l1 { color: #fff; text-shadow: 0 5px 0 rgba(40, 25, 80, .35); }
+  .titulo .l2 { text-shadow: 0 5px 0 rgba(40, 25, 80, .35); }
+  .titulo .letra { display: inline-block; animation: flota 2.6s ease-in-out infinite; }
+  @keyframes flota { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-7px); } }
+  .lema { margin: 0; font-size: 19px; opacity: .9; }
+  .boton {
+    background: var(--verde); color: #fff; font-weight: 800; font-size: 30px;
+    padding: 16px 46px; border-radius: 999px; box-shadow: 0 7px 0 var(--verde-osc);
+    transition: transform .08s;
+  }
+  .boton:active { transform: translateY(4px); box-shadow: 0 3px 0 var(--verde-osc); }
+  .boton.claro { background: rgba(255,255,255,.95); color: var(--tinta); box-shadow: 0 6px 0 rgba(40,25,80,.25); font-size: 20px; padding: 12px 24px; }
+  .chips { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+  .chip {
+    background: rgba(255,255,255,.18); border: 2px solid rgba(255,255,255,.35);
+    padding: 8px 16px; border-radius: 999px; font-size: 16px; font-weight: 600;
+    backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+  }
+  .version { position: fixed; right: 12px; bottom: max(8px, env(safe-area-inset-bottom)); z-index: 3; font-size: 12px; opacity: .55; }
+  body:not(.en-menu) .version { display: none; }
+  .marcador { min-width: 64px !important; padding: 8px 10px !important; }
+
+  /* Juego */
+  .hud { width: 100%; max-width: 820px; display: flex; align-items: center; gap: 10px; }
+  .icono {
+    width: 46px; height: 46px; border-radius: 50%; flex: none;
+    background: rgba(255,255,255,.2); border: 2px solid rgba(255,255,255,.35);
+    font-size: 20px; display: grid; place-items: center;
+  }
+  .progreso { flex: 1; min-width: 0; display: flex; justify-content: center; gap: min(1.2vw, 8px); }
+  .punto {
+    width: clamp(12px, 4.2vw, 26px); flex: none; aspect-ratio: 1; border-radius: 50%;
+    border: 2px solid rgba(255,255,255,.45); background: rgba(255,255,255,.08);
+    transition: background .3s, transform .3s;
+  }
+  .punto.actual { border-color: #fff; transform: scale(1.15); }
+  .punto.bien {
+    border-color: #fff;
+    background: radial-gradient(circle at 32% 28%, #fff 0 12%, transparent 30%),
+      conic-gradient(#ff7ad9, #ffd36e, #8dffb0, #6fd3ff, #a98bff, #ff7ad9);
+  }
+  .punto.escapo { opacity: .35; }
+  .marcador {
+    flex: none; min-width: 86px; text-align: center; font-weight: 800; font-size: 20px;
+    padding: 8px 14px; border-radius: 999px; background: rgba(255,255,255,.2); border: 2px solid rgba(255,255,255,.35);
+  }
+  .cielo {
+    position: relative; flex: 1; width: 100%; max-width: 820px; margin: 10px 0 14px;
+    overflow: hidden;
+  }
+  /* El techo: un borde de nube */
+  .techo {
+    position: absolute; left: 0; right: 0; top: 0; height: 22px; z-index: 1;
+    background: radial-gradient(circle at 50% 0, rgba(255,255,255,.55) 0 58%, transparent 61%) 0 0 / 34px 22px repeat-x;
+    -webkit-mask: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+            mask: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+  }
+  .respuestas {
+    width: 100%; max-width: 820px;
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
+  }
+  @media (max-width: 560px) { .respuestas { grid-template-columns: repeat(2, 1fr); } }
+  .respuesta {
+    background: rgba(255,255,255,.95); color: var(--tinta);
+    font-weight: 800; font-size: min(9vw, 40px); padding: 14px 0;
+    border-radius: var(--radio); box-shadow: 0 7px 0 rgba(40, 25, 80, .28);
+    transition: transform .08s, opacity .3s, background .2s;
+  }
+  .respuesta:active { transform: translateY(4px); box-shadow: 0 3px 0 rgba(40, 25, 80, .28); }
+  .respuesta.bien { background: var(--verde); color: #fff; box-shadow: 0 7px 0 var(--verde-osc); }
+  .respuesta.mal { animation: no .4s; opacity: .28; pointer-events: none; }
+
+  /* Textos que flotan (+12) */
+  .flotante {
+    position: absolute; font-weight: 800; font-size: 34px; color: #fff;
+    text-shadow: 0 3px 0 rgba(40, 25, 80, .4);
+    transform: translate(-50%, -50%);
+  }
+
+  /* Fin de ronda */
+  .fin { justify-content: center; }
+  .tarjeta {
+    pointer-events: auto;
+    background: rgba(255,255,255,.96); color: var(--tinta); border-radius: 32px;
+    padding: 28px 26px 26px; width: min(92vw, 420px); text-align: center;
+    box-shadow: 0 10px 0 rgba(40, 25, 80, .25);
+    animation: aparece .45s cubic-bezier(.2, 1.4, .4, 1);
+  }
+  @keyframes aparece { from { transform: scale(.7); opacity: 0; } }
+  .tarjeta h2 { margin: 0 0 6px; font-size: 32px; }
+  .estrellas { font-size: 54px; letter-spacing: 6px; margin: 6px 0 4px; }
+  .estrellas .apagada { filter: grayscale(1); opacity: .3; }
+  .estrellas span { display: inline-block; animation: aparece .5s backwards; }
+  .resumen { font-size: 20px; margin: 4px 0; }
+  .resumen b { font-size: 26px; }
+  .tarjeta .acciones { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 18px; }
+  .tarjeta .boton { font-size: 24px; padding: 13px 30px; }
+</style>
+</head>
+<body data-fondo="atardecer" class="en-menu">
+  <div class="fondo">
+    <div class="nube" style="top:14%; animation-duration:70s; animation-delay:-20s"></div>
+    <div class="nube" style="top:38%; animation-duration:95s; animation-delay:-60s; transform:scale(1.4)"></div>
+    <div class="nube" style="top:66%; animation-duration:80s; animation-delay:-5s"></div>
+  </div>
+  <div class="decor" id="decor"></div>
+
+  <!-- Menú -->
+  <section class="pantalla menu" id="menu">
+    <h1 class="titulo"><span class="l1">¡Revienta</span><span class="l2">Tablas!</span></h1>
+    <p class="lema">Reventá las pompas que sabés</p>
+    <button class="boton" id="jugar">¡Jugar!</button>
+    <div class="chips">
+      <span class="chip">Tablas del 1 al 4</span>
+      <button class="chip" id="cambiar-fondo">Fondo: atardecer</button>
+    </div>
+  </section>
+
+  <!-- Juego -->
+  <section class="pantalla juego" id="juego" hidden>
+    <div class="hud">
+      <button class="icono" id="salir" aria-label="Volver al inicio">✕</button>
+      <div class="progreso" id="progreso"></div>
+      <div class="marcador" id="marcador">0</div>
+    </div>
+    <div class="cielo" id="cielo"><div class="techo"></div></div>
+    <div class="respuestas" id="respuestas"></div>
+  </section>
+
+  <!-- Fin de ronda -->
+  <section class="pantalla fin" id="fin" hidden>
+    <div class="tarjeta">
+      <h2 id="fin-titulo">¡Muy bien!</h2>
+      <div class="estrellas" id="estrellas"></div>
+      <p class="resumen">Reventaste <b id="fin-aciertos">0</b> de 10</p>
+      <p class="resumen">Puntos: <b id="fin-puntos">0</b></p>
+      <div class="acciones">
+        <button class="boton" id="otra">Otra ronda</button>
+        <button class="boton claro" id="inicio">Inicio</button>
+      </div>
+    </div>
+  </section>
+
+  <div class="efectos" id="efectos"></div>
+  <span class="version" id="version">v0.1.0</span>
+
+<script>
+(() => {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  const azar = (a, b) => a + Math.random() * (b - a);
+  const entero = (a, b) => Math.floor(azar(a, b + 1));
+
+  /* ---------- Sonido (sintetizado, sin archivos) ---------- */
+  let ac = null;
+  function audio() {
+    if (!ac) { try { ac = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return null; } }
+    if (ac.state === 'suspended') ac.resume();
+    return ac;
+  }
+  function tono(tipo, f0, f1, dur, vol, cuando = 0) {
+    const a = audio(); if (!a) return;
+    const t = a.currentTime + cuando;
+    const o = a.createOscillator(), g = a.createGain();
+    o.type = tipo;
+    o.frequency.setValueAtTime(f0, t);
+    o.frequency.exponentialRampToValueAtTime(f1, t + dur);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(vol, t + 0.008);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g).connect(a.destination);
+    o.start(t); o.stop(t + dur + 0.02);
+  }
+  function ruido(dur, frec, vol) {
+    const a = audio(); if (!a) return;
+    const t = a.currentTime;
+    const buf = a.createBuffer(1, Math.ceil(a.sampleRate * dur), a.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / d.length);
+    const s = a.createBufferSource(); s.buffer = buf;
+    const f = a.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = frec; f.Q.value = 0.8;
+    const g = a.createGain(); g.gain.value = vol;
+    s.connect(f).connect(g).connect(a.destination);
+    s.start(t);
+  }
+  const sonidos = {
+    pop()  { tono('sine', 1100, 180, 0.11, 0.4); ruido(0.06, 2400, 0.35); tono('triangle', 1600, 2400, 0.08, 0.12, 0.05); },
+    popChico() { tono('sine', 1600, 500, 0.06, 0.18); ruido(0.03, 3500, 0.15); },
+    no()   { tono('triangle', 320, 220, 0.18, 0.18); tono('triangle', 300, 200, 0.18, 0.14, 0.12); },
+    fiuu() { tono('sine', 380, 1100, 0.45, 0.12); },
+    fin()  { [523, 659, 784, 1047].forEach((f, i) => tono('triangle', f, f, 0.22, 0.2, i * 0.11)); },
+  };
+
+  /* ---------- Crear pompas ---------- */
+  function crearPompa(tam, texto) {
+    const el = document.createElement('div');
+    el.className = 'pompa';
+    el.style.setProperty('--t', tam + 'px');
+    el.style.setProperty('--retraso', (-Math.random() * 3) + 's');
+    el.innerHTML = '<div class="forma"><div class="film"></div><div class="iris"></div><div class="brillo"></div>'
+      + (texto ? '<div class="cuenta"></div>' : '') + '</div>';
+    if (texto) el.querySelector('.cuenta').textContent = texto;
+    // Cada pompa arranca con el tornasolado en otra posición
+    const giro = Math.random() * 360;
+    el.querySelector('.iris').style.rotate = giro + 'deg';
+    el.querySelector('.film').style.rotate = -giro + 'deg';
+    return el;
+  }
+
+  /* ---------- Efecto de reventar ---------- */
+  const COLORES = ['#ff9ae3', '#ffe08a', '#9dffc0', '#8fdcff', '#c3a8ff', '#ffffff'];
+  function reventar(cx, cy, tam, grande) {
+    const capa = $('efectos');
+    // Anillo que se expande
+    const anillo = document.createElement('div');
+    Object.assign(anillo.style, {
+      position: 'absolute', left: cx - tam / 2 + 'px', top: cy - tam / 2 + 'px',
+      width: tam + 'px', height: tam + 'px', borderRadius: '50%',
+      border: Math.max(2, tam * 0.025) + 'px solid rgba(255,255,255,.85)',
+    });
+    capa.append(anillo);
+    anillo.animate([{ transform: 'scale(1)', opacity: 1 }, { transform: 'scale(1.45)', opacity: 0 }],
+      { duration: 320, easing: 'ease-out' }).onfinish = () => anillo.remove();
+    // Gotitas que salen volando
+    const n = grande ? 18 : 7;
+    for (let i = 0; i < n; i++) {
+      const g = document.createElement('div');
+      const r = azar(3, grande ? 9 : 5);
+      const ang = (i / n) * Math.PI * 2 + azar(-0.2, 0.2);
+      const d = tam * azar(0.55, grande ? 1.1 : 0.8);
+      const c = COLORES[i % COLORES.length];
+      Object.assign(g.style, {
+        position: 'absolute', left: cx - r + 'px', top: cy - r + 'px', width: r * 2 + 'px', height: r * 2 + 'px',
+        borderRadius: '50%', background: `radial-gradient(circle at 35% 30%, #fff 0 25%, ${c} 60%)`, opacity: 0.95,
+      });
+      capa.append(g);
+      const dx = Math.cos(ang) * d, dy = Math.sin(ang) * d;
+      g.animate([
+        { transform: 'translate(0,0) scale(1)', opacity: 1 },
+        { transform: `translate(${dx * 0.8}px, ${dy * 0.8}px) scale(.9)`, opacity: 0.9, offset: 0.6 },
+        { transform: `translate(${dx}px, ${dy + tam * 0.25}px) scale(.3)`, opacity: 0 },
+      ], { duration: azar(450, 700), easing: 'cubic-bezier(.15,.8,.3,1)' }).onfinish = () => g.remove();
+    }
+    // Destello
+    if (grande) {
+      const b = document.createElement('div');
+      Object.assign(b.style, {
+        position: 'absolute', left: cx - tam * 0.6 + 'px', top: cy - tam * 0.6 + 'px',
+        width: tam * 1.2 + 'px', height: tam * 1.2 + 'px', borderRadius: '50%',
+        background: 'radial-gradient(closest-side, rgba(255,255,255,.75), rgba(255,255,255,0))',
+      });
+      capa.append(b);
+      b.animate([{ transform: 'scale(.4)', opacity: 1 }, { transform: 'scale(1)', opacity: 0 }],
+        { duration: 260, easing: 'ease-out' }).onfinish = () => b.remove();
+    }
+  }
+  function textoFlotante(cx, cy, texto) {
+    const t = document.createElement('div');
+    t.className = 'flotante'; t.textContent = texto;
+    t.style.left = cx + 'px'; t.style.top = cy + 'px';
+    $('efectos').append(t);
+    t.animate([
+      { transform: 'translate(-50%,-50%) scale(.6)', opacity: 0 },
+      { transform: 'translate(-50%,-90%) scale(1.15)', opacity: 1, offset: 0.25 },
+      { transform: 'translate(-50%,-200%) scale(1)', opacity: 0 },
+    ], { duration: 1000, easing: 'ease-out' }).onfinish = () => t.remove();
+  }
+
+  /* ---------- Pompas decorativas de fondo ---------- */
+  const decor = [];
+  let proximaDecor = 0;
+  function sumarDecor(enMenu) {
+    const max = enMenu ? 14 : 8;
+    if (decor.length >= max) return;
+    const tam = enMenu ? azar(14, 90) : azar(8, 34);
+    const el = crearPompa(tam);
+    el.style.opacity = enMenu ? azar(0.55, 0.95) : azar(0.3, 0.55);
+    const p = { el, tam, x: azar(-tam / 2, innerWidth - tam / 2), y: innerHeight + tam, vel: azar(28, 70) * (enMenu ? 1 : 0.8), fase: azar(0, 6), amp: azar(6, 22) };
+    el.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      sonidos.popChico();
+      reventar(p.x + p.tam / 2, p.y + p.tam / 2, p.tam, false);
+      quitarDecor(p);
+    });
+    $('decor').append(el);
+    decor.push(p);
+  }
+  function quitarDecor(p) {
+    const i = decor.indexOf(p);
+    if (i < 0) return;
+    p.el.remove(); decor.splice(i, 1);
+  }
+  function moverDecor(dt, ahora) {
+    if (ahora > proximaDecor) {
+      sumarDecor(document.body.classList.contains('en-menu'));
+      proximaDecor = ahora + azar(450, 1100);
+    }
+    for (const p of decor.slice()) {
+      p.y -= p.vel * dt;
+      const x = p.x + Math.sin(ahora / 1000 * 1.1 + p.fase) * p.amp;
+      p.el.style.transform = `translate(${x}px, ${p.y}px)`;
+      if (p.y < -p.tam - 10) quitarDecor(p);
+    }
+  }
+
+  /* ---------- Ronda (maqueta: lógica simple para ver la estética) ---------- */
+  const TABLAS = [1, 2, 3, 4];
+  const POR_RONDA = 10;
+  const DURACION = 10000; // ms que tarda una pompa en llegar al techo
+  let ronda = null, actual = null;
+
+  function pregunta() {
+    let a, b, clave;
+    do {
+      a = TABLAS[entero(0, TABLAS.length - 1)]; b = entero(1, 10);
+      if (Math.random() < 0.5) [a, b] = [b, a];
+      clave = a + 'x' + b;
+    } while (ronda.usadas.has(clave) && ronda.usadas.size < 30);
+    ronda.usadas.add(clave);
+    const r = a * b;
+    const opciones = new Set([r]);
+    const candidatos = [r + 1, r - 1, r + a, r - a, r + b, r - b, r + 2, r - 2, (a + 1) * (b + 1), r + 10];
+    while (opciones.size < 4) {
+      const c = candidatos.length ? candidatos.splice(entero(0, candidatos.length - 1), 1)[0] : entero(1, 50);
+      if (c > 0) opciones.add(c);
+    }
+    return { a, b, r, opciones: [...opciones].sort(() => Math.random() - 0.5) };
+  }
+
+  function mostrar(id) {
+    for (const s of ['menu', 'juego', 'fin']) $(s).hidden = s !== id;
+    document.body.classList.toggle('en-menu', id === 'menu');
+    // Al jugar, las pompas grandes del menú se desvanecen para no distraer
+    if (id === 'juego') {
+      for (const p of decor.slice()) {
+        if (p.tam > 34) p.el.animate([{ opacity: p.el.style.opacity }, { opacity: 0 }], { duration: 500 }).onfinish = () => quitarDecor(p);
+      }
+    }
+  }
+
+  function empezar() {
+    audio();
+    ronda = { n: 0, aciertos: 0, puntos: 0, usadas: new Set() };
+    $('progreso').innerHTML = '';
+    for (let i = 0; i < POR_RONDA; i++) {
+      const d = document.createElement('div'); d.className = 'punto'; $('progreso').append(d);
+    }
+    $('marcador').textContent = '0';
+    mostrar('juego');
+    setTimeout(lanzar, 400);
+  }
+
+  function lanzar() {
+    if (!ronda) return;
+    if (ronda.n >= POR_RONDA) return terminar();
+    const puntos = $('progreso').children;
+    puntos[ronda.n].classList.add('actual');
+    const cielo = $('cielo').getBoundingClientRect();
+    const q = pregunta();
+    const tam = Math.round(Math.min(cielo.width * 0.46, cielo.height * 0.4, 300));
+    const el = crearPompa(tam, `${q.a} × ${q.b}`);
+    $('cielo').append(el);
+    const margen = Math.min(30, cielo.width * 0.05);
+    actual = {
+      el, q, tam, p: 0, vivo: true,
+      x0: azar(margen, Math.max(margen, cielo.width - tam - margen)),
+      y0: cielo.height - tam * 0.85,
+      fase: azar(0, 6),
+    };
+    const caja = $('respuestas');
+    caja.innerHTML = '';
+    for (const op of q.opciones) {
+      const b = document.createElement('button');
+      b.className = 'respuesta'; b.textContent = op;
+      b.addEventListener('pointerdown', (e) => { e.preventDefault(); responder(op, b); });
+      caja.append(b);
+    }
+  }
+
+  function posicion(a, ahora) {
+    const y = a.y0 * (1 - a.p);
+    const x = a.x0 + Math.sin(ahora / 1000 * 1.2 + a.fase) * 12;
+    return { x, y };
+  }
+
+  function moverActual(dt, ahora) {
+    const a = actual;
+    if (!a || !a.vivo) return;
+    a.p = Math.min(1, a.p + dt * 1000 / DURACION);
+    const { x, y } = posicion(a, ahora);
+    a.el.style.transform = `translate(${x}px, ${y}px)`;
+    a.x = x; a.y = y;
+    if (a.p >= 1) escapar();
+  }
+
+  function centroEnPantalla(a) {
+    const c = $('cielo').getBoundingClientRect();
+    return { cx: c.left + a.x + a.tam / 2, cy: c.top + a.y + a.tam / 2 };
+  }
+
+  function responder(valor, boton) {
+    const a = actual;
+    if (!a || !a.vivo) return;
+    if (valor === a.q.r) {
+      a.vivo = false;
+      boton.classList.add('bien');
+      const { cx, cy } = centroEnPantalla(a);
+      const ganados = 10 + Math.round(10 * (1 - a.p)); // más alto el premio si la revienta rápido
+      ronda.aciertos++; ronda.puntos += ganados;
+      $('marcador').textContent = ronda.puntos;
+      sonidos.pop();
+      reventar(cx, cy, a.tam, true);
+      textoFlotante(cx, cy, '+' + ganados);
+      a.el.remove();
+      const punto = $('progreso').children[ronda.n];
+      punto.classList.remove('actual'); punto.classList.add('bien');
+      siguiente();
+    } else {
+      boton.classList.add('mal');
+      sonidos.no();
+      a.el.classList.remove('no'); void a.el.offsetWidth; a.el.classList.add('no');
+    }
+  }
+
+  function escapar() {
+    const a = actual;
+    a.vivo = false;
+    sonidos.fiuu();
+    a.el.animate([
+      { transform: a.el.style.transform, opacity: 1 },
+      { transform: `translate(${a.x}px, ${-a.tam * 1.2}px) scale(.8)`, opacity: 0 },
+    ], { duration: 600, easing: 'ease-in' }).onfinish = () => a.el.remove();
+    for (const b of $('respuestas').children) if (+b.textContent === a.q.r) b.classList.add('bien');
+    const punto = $('progreso').children[ronda.n];
+    punto.classList.remove('actual'); punto.classList.add('escapo');
+    siguiente(1300);
+  }
+
+  function siguiente(espera = 750) {
+    ronda.n++;
+    setTimeout(lanzar, espera);
+  }
+
+  function terminar() {
+    const { aciertos, puntos } = ronda;
+    const bonus = aciertos === POR_RONDA ? 50 : 0;
+    const estrellas = aciertos >= 9 ? 3 : aciertos >= 7 ? 2 : aciertos >= 4 ? 1 : 0;
+    $('fin-titulo').textContent = aciertos === POR_RONDA ? '¡Perfecto!' : aciertos >= 7 ? '¡Muy bien!' : '¡Bien jugado!';
+    $('estrellas').innerHTML = [0, 1, 2].map((i) =>
+      `<span class="${i < estrellas ? '' : 'apagada'}" style="animation-delay:${0.15 + i * 0.15}s">⭐</span>`).join('');
+    $('fin-aciertos').textContent = aciertos;
+    $('fin-puntos').textContent = puntos + bonus + (bonus ? '  (+50 perfecto)' : '');
+    ronda = null; actual = null;
+    sonidos.fin();
+    mostrar('fin');
+  }
+
+  function salir() {
+    if (actual) actual.el.remove();
+    ronda = null; actual = null;
+    $('respuestas').innerHTML = '';
+    mostrar('menu');
+  }
+
+  /* ---------- Fondos (en la versión final se compran en la tienda) ---------- */
+  const FONDOS = ['atardecer', 'cielo', 'noche'];
+  $('cambiar-fondo').addEventListener('click', () => {
+    const i = (FONDOS.indexOf(document.body.dataset.fondo) + 1) % FONDOS.length;
+    document.body.dataset.fondo = FONDOS[i];
+    $('cambiar-fondo').textContent = 'Fondo: ' + FONDOS[i];
+  });
+
+  /* ---------- Título con letras que flotan ---------- */
+  const COLORES_TITULO = ['#ff9ae3', '#ffe08a', '#9dffc0', '#8fdcff', '#c3a8ff', '#ffb38a', '#ff9ae3'];
+  for (const span of document.querySelectorAll('.titulo span')) {
+    const txt = span.textContent; span.textContent = '';
+    const colorear = span.classList.contains('l2');
+    [...txt].forEach((ch, i) => {
+      const l = document.createElement('span');
+      l.className = 'letra'; l.textContent = ch;
+      l.style.animationDelay = (i * 0.12) + 's';
+      if (colorear) l.style.color = COLORES_TITULO[i % COLORES_TITULO.length];
+      span.append(l);
+    });
+  }
+
+  $('jugar').addEventListener('click', empezar);
+  $('otra').addEventListener('click', empezar);
+  $('inicio').addEventListener('click', () => mostrar('menu'));
+  $('salir').addEventListener('click', salir);
+
+  /* ---------- Bucle de animación ---------- */
+  let antes = performance.now();
+  function cuadro(ahora) {
+    const dt = Math.min(0.05, (ahora - antes) / 1000);
+    antes = ahora;
+    moverDecor(dt, ahora);
+    moverActual(dt, ahora);
+    requestAnimationFrame(cuadro);
+  }
+  requestAnimationFrame(cuadro);
+})();
+</script>
+</body>
+</html>
